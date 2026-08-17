@@ -10,6 +10,7 @@ import "swiper/css";
 import "swiper/css/navigation";
 import Heading from "@/components/Heading";
 import TestimonialForm from "@/components/TestimonialForm";
+import { useLanguage } from "@/components/LanguageContext";
 
 interface Review {
   id: number;
@@ -58,6 +59,7 @@ function ReviewComment({ text }: { text: string }) {
   const [expanded, setExpanded] = useState(false);
   const [isOverflowing, setIsOverflowing] = useState(false);
   const paragraphRef = useRef<HTMLParagraphElement>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     const el = paragraphRef.current;
@@ -79,7 +81,7 @@ function ReviewComment({ text }: { text: string }) {
           onClick={() => setExpanded((v) => !v)}
           className="mt-1 text-sm font-bold text-indigo-600 hover:underline"
         >
-          {expanded ? "See Less" : "See More"}
+          {expanded ? t("testimonials.seeLess") : t("testimonials.seeMore")}
         </button>
       )}
     </div>
@@ -89,6 +91,7 @@ function ReviewComment({ text }: { text: string }) {
 /** Faithful port of Medical_Product/src/components/Testimonials/Testimonials.jsx, backed by real /api/reviews. */
 export default function TestimonialsSection() {
   const [reviews, setReviews] = useState<Review[]>([]);
+  const { t } = useLanguage();
 
   function loadReviews() {
     return fetch("/api/reviews")
@@ -112,7 +115,7 @@ export default function TestimonialsSection() {
   return (
     <section id="testimonials" className="scroll-mt-28">
       <div className="max-w-[1400px] mx-auto px-10 py-16">
-        <Heading highlight="Customers" heading="Saying" />
+        <Heading highlight={t("testimonials.highlight")} heading={t("testimonials.heading")} />
 
         {reviews.length > 0 ? (
           <>
@@ -148,7 +151,7 @@ export default function TestimonialsSection() {
                   <div className="flex gap-5 items-center">
                     <div className="relative w-16 h-16 rounded-full overflow-hidden outline outline-orange-500 outline-offset-4 shrink-0">
                       {item.avatar_url ? (
-                        <Image src={item.avatar_url} alt={item.name} fill className="object-cover" />
+                        <Image src={item.avatar_url} alt={item.name} fill sizes="64px" className="object-cover" />
                       ) : (
                         <div
                           className={`flex h-full w-full items-center justify-center text-lg font-bold text-white ${getAvatarColor(item.name)}`}
@@ -159,14 +162,14 @@ export default function TestimonialsSection() {
                     </div>
                     <div>
                       <h5 className="text-xl font-bold">{item.name}</h5>
-                      <p className="text-zinc-600">{item.title || "Verified Customer"}</p>
+                      <p className="text-zinc-600">{item.title || t("testimonials.verifiedCustomer")}</p>
                       <span className="mt-3 flex items-center gap-2">
                         <span className="flex text-xl gap-1">
                           {[1, 2, 3, 4, 5].map((star) => (
                             <FaStar key={star} className={item.rating >= star ? "text-yellow-400" : "text-zinc-300"} />
                           ))}
                         </span>
-                        <span className="text-sm font-semibold text-zinc-500">{item.rating} of 5 stars</span>
+                        <span className="text-sm font-semibold text-zinc-500">{item.rating} {t("reviewForm.ratingOf5")}</span>
                       </span>
                     </div>
                   </div>
@@ -178,7 +181,7 @@ export default function TestimonialsSection() {
             </Swiper>
           </>
         ) : (
-          <div className="rounded-xl bg-zinc-100 p-6 text-zinc-600">No customer reviews available yet.</div>
+          <div className="rounded-xl bg-zinc-100 p-6 text-zinc-600">{t("testimonials.noReviews")}</div>
         )}
 
         <TestimonialForm onSubmitted={loadReviews} />

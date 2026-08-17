@@ -34,7 +34,7 @@ export default function AddToCartButton({ product, disabled }: { product: Produc
         className={`flex h-[52px] w-[52px] items-center justify-center rounded-full text-xl ring-1 transition-colors ${
           favorite ? "bg-red-50 text-red-500 ring-red-100" : "bg-white text-slate-300 ring-slate-200 hover:text-red-500"
         }`}
-        aria-label={favorite ? "Remove from wishlist" : "Add to wishlist"}
+        aria-label={favorite ? t("product.removeFromWishlist") : t("product.addToWishlist")}
       >
         <FaHeart />
       </button>

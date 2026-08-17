@@ -4,9 +4,11 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import Link from "next/link";
 import { FaStar } from "react-icons/fa";
+import { useLanguage } from "@/components/LanguageContext";
 
 export default function TestimonialForm({ onSubmitted }: { onSubmitted: () => void }) {
   const { data: session } = useSession();
+  const { t } = useLanguage();
   const [rating, setRating] = useState(0);
   const [hoverRating, setHoverRating] = useState(0);
   const [title, setTitle] = useState("");
@@ -37,20 +39,20 @@ export default function TestimonialForm({ onSubmitted }: { onSubmitted: () => vo
     return (
       <div className="mt-8 rounded-2xl border border-zinc-100 bg-zinc-50 p-6 text-center text-sm text-zinc-500">
         <Link href="/login" className="font-bold text-indigo-600 hover:underline">
-          Sign in
+          {t("reviewForm.signIn")}
         </Link>{" "}
-        to share your own experience — only customers who have placed an order can leave a testimonial.
+        {t("testimonialForm.signInPrompt")}
       </div>
     );
   }
 
   async function handleSubmit() {
     if (rating === 0) {
-      setNotice({ type: "error", message: "Please select a star rating." });
+      setNotice({ type: "error", message: t("testimonialForm.pleaseSelectRating") });
       return;
     }
     if (!comment.trim()) {
-      setNotice({ type: "error", message: "Please write a comment." });
+      setNotice({ type: "error", message: t("testimonialForm.pleaseWriteComment") });
       return;
     }
 
@@ -64,12 +66,12 @@ export default function TestimonialForm({ onSubmitted }: { onSubmitted: () => vo
     setSubmitting(false);
 
     if (!result.success) {
-      setNotice({ type: "error", message: result.message ?? "Could not submit testimonial." });
+      setNotice({ type: "error", message: result.message ?? t("testimonialForm.couldNotSubmit") });
       return;
     }
     setNotice({
       type: "success",
-      message: isEditing ? "Your testimonial has been updated." : "Thanks — your testimonial has been posted.",
+      message: isEditing ? t("testimonialForm.updated") : t("testimonialForm.posted"),
     });
     setIsEditing(true);
     onSubmitted();
@@ -78,12 +80,10 @@ export default function TestimonialForm({ onSubmitted }: { onSubmitted: () => vo
   return (
     <div className="mt-8 rounded-2xl border border-zinc-100 bg-zinc-50 p-6">
       <p className="text-sm font-bold uppercase tracking-widest text-zinc-400">
-        {isEditing ? "Edit Your Testimonial" : "Share Your Experience"}
+        {isEditing ? t("testimonialForm.editHeading") : t("testimonialForm.shareHeading")}
       </p>
       {isEditing && (
-        <p className="mt-1 text-xs text-zinc-500">
-          You've already posted a testimonial — only one per customer. Submitting below updates it instead of adding a new one.
-        </p>
+        <p className="mt-1 text-xs text-zinc-500">{t("testimonialForm.editNotice")}</p>
       )}
 
       <div className="mt-3 flex items-center gap-3">
@@ -103,7 +103,7 @@ export default function TestimonialForm({ onSubmitted }: { onSubmitted: () => vo
           ))}
         </div>
         <span className="text-sm font-semibold text-zinc-500">
-          {rating > 0 ? `${rating} of 5 stars` : "No rating selected"}
+          {rating > 0 ? `${rating} ${t("reviewForm.ratingOf5")}` : t("reviewForm.noRating")}
         </span>
         {rating > 0 && (
           <button
@@ -111,7 +111,7 @@ export default function TestimonialForm({ onSubmitted }: { onSubmitted: () => vo
             onClick={() => setRating(0)}
             className="text-sm font-semibold text-zinc-400 underline hover:text-zinc-600"
           >
-            Clear
+            {t("reviewForm.clearRating")}
           </button>
         )}
       </div>
@@ -120,14 +120,14 @@ export default function TestimonialForm({ onSubmitted }: { onSubmitted: () => vo
         type="text"
         value={title}
         onChange={(e) => setTitle(e.target.value)}
-        placeholder={'A short title (optional) — e.g. "Fast and reliable"'}
+        placeholder={t("testimonialForm.titlePlaceholder")}
         className="mt-4 w-full rounded-xl border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50"
       />
       <textarea
         value={comment}
         onChange={(e) => setComment(e.target.value)}
         rows={3}
-        placeholder="Tell other customers about your experience"
+        placeholder={t("testimonialForm.commentPlaceholder")}
         className="mt-3 w-full rounded-xl border border-zinc-200 bg-white p-3 text-sm outline-none focus:border-indigo-500 focus:ring-2 focus:ring-indigo-50"
       />
 
@@ -143,7 +143,7 @@ export default function TestimonialForm({ onSubmitted }: { onSubmitted: () => vo
         disabled={submitting}
         className="mt-4 rounded-full bg-gradient-to-b from-indigo-400 to-indigo-600 px-6 py-2.5 text-sm font-bold text-white shadow-md hover:from-indigo-500 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
       >
-        {submitting ? "Saving..." : isEditing ? "Update Testimonial" : "Submit Testimonial"}
+        {submitting ? t("testimonialForm.saving") : isEditing ? t("testimonialForm.update") : t("testimonialForm.submit")}
       </button>
     </div>
   );

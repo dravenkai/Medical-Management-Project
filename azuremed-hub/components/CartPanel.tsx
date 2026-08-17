@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { FaMinus, FaPlus, FaTrash } from "react-icons/fa";
 import { useCart } from "@/components/CartContext";
+import { useLanguage } from "@/components/LanguageContext";
 
 /**
  * "Reserved for MM:SS" countdown for one cart line — the item's hold on
@@ -15,6 +16,7 @@ import { useCart } from "@/components/CartContext";
  */
 function ReservationCountdown({ reservedUntil, onExpire }: { reservedUntil: string | null; onExpire: () => void }) {
   const [remainingMs, setRemainingMs] = useState<number | null>(null);
+  const { t } = useLanguage();
 
   useEffect(() => {
     if (!reservedUntil) {
@@ -44,7 +46,7 @@ function ReservationCountdown({ reservedUntil, onExpire }: { reservedUntil: stri
 
   return (
     <span className={`text-[11px] font-semibold ${isUrgent ? "text-red-500" : "text-slate-400"}`}>
-      Reserved for {minutes}:{String(seconds).padStart(2, "0")}
+      {t("cart.reservedFor")} {minutes}:{String(seconds).padStart(2, "0")}
     </span>
   );
 }
@@ -52,6 +54,7 @@ function ReservationCountdown({ reservedUntil, onExpire }: { reservedUntil: stri
 /** Faithful port of Medical_Product/src/components/Cart/Cart.jsx. */
 export default function CartPanel() {
   const { cartItems, activePanel, closePanel, updateCartQty, removeFromCart, refreshCart } = useCart();
+  const { t } = useLanguage();
   const router = useRouter();
   const isOpen = activePanel === "cart";
   const subtotal = cartItems.reduce((acc, item) => acc + item.price * item.quantity, 0);
@@ -63,17 +66,17 @@ export default function CartPanel() {
       }`}
     >
       <div className="px-10">
-        <h3 className="text-3xl font-bold text-zinc-800 text-center">Your Cart</h3>
+        <h3 className="text-3xl font-bold text-zinc-800 text-center">{t("cart.yourCart")}</h3>
       </div>
 
       <div className="flex-1 overflow-y-auto">
         {cartItems.length === 0 ? (
-          <div className="px-10 py-12 text-center text-zinc-500">Your cart is empty.</div>
+          <div className="px-10 py-12 text-center text-zinc-500">{t("cart.empty")}</div>
         ) : (
           cartItems.map((item) => (
             <div key={item.id} className="flex items-center gap-3 bg-white px-5 py-3 border-y border-zinc-200">
               <div className="relative w-16 h-16 shrink-0">
-                {item.image_url && <Image src={item.image_url} fill className="object-contain" alt={item.name} />}
+                {item.image_url && <Image src={item.image_url} fill sizes="64px" className="object-contain" alt={item.name} />}
               </div>
               <div className="flex-1">
                 <div className="flex justify-between items-center">
@@ -117,22 +120,22 @@ export default function CartPanel() {
 
       <div className="px-10 border-y border-zinc-300">
         <div className="flex justify-between pt-2">
-          <span className="text-zinc-800">Subtotal</span>
+          <span className="text-zinc-800">{t("cart.subtotal")}</span>
           <span className="text-zinc-800">{subtotal.toLocaleString()} MMK</span>
         </div>
         <div className="flex justify-between py-2">
-          <span className="text-zinc-800">Shipping &amp; Handlings</span>
+          <span className="text-zinc-800">{t("cart.shippingHandling")}</span>
           <span className="text-zinc-800">0 MMK</span>
         </div>
         <div className="flex justify-between py-2 border-t border-zinc-300">
-          <span className="text-lg text-blue-600 font-bold">Order Total</span>
+          <span className="text-lg text-blue-600 font-bold">{t("cart.orderTotal")}</span>
           <span className="text-lg text-blue-600 font-bold">{subtotal.toLocaleString()} MMK</span>
         </div>
       </div>
 
       <div className="flex gap-x-2 px-10">
         <button className="bg-blue-600 text-white flex-1 h-14 rounded active:bg-blue-700" onClick={closePanel}>
-          Close
+          {t("cart.close")}
         </button>
         <button
           disabled={cartItems.length === 0}
@@ -142,7 +145,7 @@ export default function CartPanel() {
           }}
           className="bg-blue-600 text-white flex-1 h-14 rounded active:bg-blue-700 disabled:cursor-not-allowed disabled:bg-slate-300"
         >
-          Checkout
+          {t("cart.checkout")}
         </button>
       </div>
     </div>

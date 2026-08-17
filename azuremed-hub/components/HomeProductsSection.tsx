@@ -5,6 +5,8 @@ import Link from "next/link";
 import ProductCard from "@/components/ProductCard";
 import Heading from "@/components/Heading";
 import { useCart } from "@/components/CartContext";
+import { useLanguage } from "@/components/LanguageContext";
+import type { TranslationKey } from "@/lib/translations";
 
 interface Product {
   id: number;
@@ -26,6 +28,20 @@ const CATEGORIES = [
   "Personal Care & Equipment",
 ];
 
+// Filtering still runs against the raw English category value stored in the
+// DB (product.category) — this only maps it to a translation key for the
+// tab's displayed label, reusing the same nav.* keys the pharmacy dropdown
+// already uses so both places stay in sync automatically.
+const CATEGORY_LABEL_KEYS: Record<string, TranslationKey> = {
+  All: "homeProducts.categoryAll",
+  "Fever, Cough & Cold": "nav.feverCoughCold",
+  "Fitness & Supplement": "nav.fitnessSupplement",
+  "Sexual Wellness": "nav.sexualWellness",
+  "Mother & Child": "nav.motherChild",
+  "Traditional Medicine": "nav.traditionalMedicine",
+  "Personal Care & Equipment": "nav.personalCareEquipment",
+};
+
 /** Faithful port of Medical_Product/src/components/Products/Products.jsx + Heading.jsx (light theme). */
 export default function HomeProductsSection() {
   const [activeTab, setActiveTab] = useState("All");
@@ -37,11 +53,16 @@ export default function HomeProductsSection() {
   // cartCount changes keeps this grid's "available" counts in sync with
   // whatever was just reserved/released.
   const { cartCount } = useCart();
+  const { t } = useLanguage();
 
   useEffect(() => {
+    // Unguarded, this throws an unhandled rejection straight to Next's dev
+    // error overlay on any transient network hiccup — a stale product list
+    // is a far better failure mode than crashing the homepage.
     fetch("/api/products")
       .then((r) => r.json())
-      .then((result) => result.success && setProducts(result.data));
+      .then((result) => result.success && setProducts(result.data))
+      .catch((error) => console.error("[home-products] fetch failed:", error));
   }, [cartCount]);
 
   const filtered = activeTab === "All" ? products : products.filter((p) => p.category === activeTab);
@@ -50,7 +71,7 @@ export default function HomeProductsSection() {
   return (
     <section>
       <div className="max-w-[1400px] mx-auto px-10 py-10">
-        <Heading highlight="Our" heading="Products" />
+        <Heading highlight={t("homeProducts.highlight")} heading={t("homeProducts.heading")} />
 
         <div className="flex flex-wrap gap-3 justify-center mt-10">
           {CATEGORIES.map((category) => (
@@ -61,7 +82,7 @@ export default function HomeProductsSection() {
               }`}
               onClick={() => setActiveTab(category)}
             >
-              {category}
+              {t(CATEGORY_LABEL_KEYS[category])}
             </button>
           ))}
         </div>
@@ -74,7 +95,7 @@ export default function HomeProductsSection() {
       </div>
 
       {visible.length === 0 && (
-        <p className="mx-12 mt-8 text-center text-slate-500">No products found in this category.</p>
+        <p className="mx-12 mt-8 text-center text-slate-500">{t("homeProducts.noProductsInCategory")}</p>
       )}
 
       <div className="py-10 my-16 mx-auto w-fit mt-0">
@@ -82,7 +103,7 @@ export default function HomeProductsSection() {
           href="/products"
           className="bg-gradient-to-b from-indigo-400 to-indigo-500 text-white px-8 py-3 rounded-lg md:text-lg text-md hover:scale-110 hover:bg-gradient-to-l hover:to-indigo-600 transition-all duration-300 cursor-pointer inline-block"
         >
-          View All
+          {t("homeProducts.viewAll")}
         </Link>
       </div>
     </section>

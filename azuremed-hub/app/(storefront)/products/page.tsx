@@ -4,6 +4,7 @@ import pool from "@/config/db";
 import type { RowDataPacket } from "mysql2";
 import ProductCard from "@/components/ProductCard";
 import ProductToolbar from "@/components/ProductToolbar";
+import { ProductsCatalogBadge, ProductsTitle, ProductsFoundBadge, ProductsEmptyState } from "@/components/ProductsPageText";
 
 // Only 3 pieces of category art exist from the old taxonomy; the 3 new
 // categories without a match (Fitness & Supplement, Sexual Wellness, Mother
@@ -56,14 +57,16 @@ export default async function ProductsPage({
     <div className="pt-32">
       {/* Category banner — redesigned to match the gradient hero treatment */}
       <div className="relative h-64 w-full overflow-hidden">
-        {banner && <Image src={banner} alt={title} fill className="object-cover" />}
+        {banner && <Image src={banner} alt={title} fill sizes="100vw" className="object-cover" />}
         <div className="absolute inset-0 bg-gradient-to-br from-blue-900/80 via-blue-800/60 to-indigo-900/80" />
         <div className="pointer-events-none absolute -top-20 -right-20 h-72 w-72 rounded-full bg-blue-400/20 blur-3xl" />
         <div className="relative flex h-full flex-col items-center justify-center gap-3 text-center px-6">
           <span className="inline-flex items-center gap-2 rounded-full bg-white/15 px-4 py-1.5 text-xs font-bold uppercase tracking-widest text-blue-50 ring-1 ring-white/30 backdrop-blur-sm">
-            AzureMed Hub Catalog
+            <ProductsCatalogBadge />
           </span>
-          <h1 className="text-3xl md:text-5xl font-extrabold text-white drop-shadow-sm">{title}</h1>
+          <h1 className="text-3xl md:text-5xl font-extrabold text-white drop-shadow-sm">
+            <ProductsTitle category={category} />
+          </h1>
         </div>
       </div>
 
@@ -74,12 +77,12 @@ export default async function ProductsPage({
 
         <div className="flex items-center gap-3 mt-6">
           <span className="rounded-full bg-blue-100 px-4 py-1.5 text-sm font-bold text-blue-700">
-            {products.length} products found
+            <ProductsFoundBadge count={products.length} />
           </span>
         </div>
 
         {products.length === 0 ? (
-          <p className="mt-10 text-slate-500">No products in this category yet.</p>
+          <ProductsEmptyState />
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-9 mt-10">
             {products.map((product) => (

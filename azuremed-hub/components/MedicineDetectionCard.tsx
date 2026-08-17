@@ -1,6 +1,8 @@
 "use client";
 
 import Image from "next/image";
+import { useLanguage } from "@/components/LanguageContext";
+import type { TranslationKey } from "@/lib/translations";
 
 const LOW_STOCK_THRESHOLD = 20;
 
@@ -32,11 +34,11 @@ const STATUS_STYLES: Record<ConfidenceStatus, string> = {
   NO_MATCH: "bg-slate-100 text-slate-500",
 };
 
-const STATUS_LABELS: Record<ConfidenceStatus, string> = {
-  HIGH_CONFIDENCE: "High confidence",
-  MEDIUM_CONFIDENCE: "Medium confidence",
-  LOW_CONFIDENCE: "Low confidence",
-  NO_MATCH: "No match",
+const STATUS_LABEL_KEYS: Record<ConfidenceStatus, TranslationKey> = {
+  HIGH_CONFIDENCE: "detect.highConfidence",
+  MEDIUM_CONFIDENCE: "detect.mediumConfidence",
+  LOW_CONFIDENCE: "detect.lowConfidence",
+  NO_MATCH: "detect.noMatch",
 };
 
 export default function MedicineDetectionCard({
@@ -48,6 +50,7 @@ export default function MedicineDetectionCard({
 }) {
   const { detection, medicineDetail, topMatches } = result;
   const accuracyPct = Math.round(detection.confidence * 100);
+  const { t } = useLanguage();
 
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900">
@@ -55,23 +58,23 @@ export default function MedicineDetectionCard({
         {medicineDetail?.matched && (
           <div className="relative size-16 shrink-0 overflow-hidden rounded-xl bg-slate-50 dark:bg-slate-800">
             {medicineDetail.imageUrl ? (
-              <Image src={medicineDetail.imageUrl} alt={medicineDetail.name} fill className="object-contain" />
+              <Image src={medicineDetail.imageUrl} alt={medicineDetail.name} fill sizes="64px" className="object-contain" />
             ) : (
-              <div className="flex h-full items-center justify-center text-xs text-slate-400">No photo</div>
+              <div className="flex h-full items-center justify-center text-xs text-slate-400">{t("detect.noPhoto")}</div>
             )}
           </div>
         )}
         <div className="flex min-w-0 flex-1 flex-wrap items-start justify-between gap-x-4 gap-y-2">
           <div className="min-w-0">
             <p className="break-words text-lg font-bold text-slate-800 dark:text-slate-100">
-              {medicineDetail?.name ?? detection.predictedClass ?? "No prediction"}
+              {medicineDetail?.name ?? detection.predictedClass ?? t("detect.noPrediction")}
             </p>
             {medicineDetail?.expireDate && (
-              <p className="mt-0.5 text-xs text-slate-500">Expires {medicineDetail.expireDate}</p>
+              <p className="mt-0.5 text-xs text-slate-500">{t("detect.expires")} {medicineDetail.expireDate}</p>
             )}
           </div>
           <span className={`shrink-0 rounded-full px-3 py-1 text-xs font-bold ${STATUS_STYLES[detection.status]}`}>
-            {STATUS_LABELS[detection.status]} · {accuracyPct}%
+            {t(STATUS_LABEL_KEYS[detection.status])} · {accuracyPct}%
           </span>
         </div>
       </div>
@@ -84,15 +87,15 @@ export default function MedicineDetectionCard({
         {!medicineDetail?.matched && (
           <p className="rounded-xl border border-red-100 bg-red-50 p-4 text-sm font-medium text-red-700 dark:border-red-900/40 dark:bg-red-950/30 dark:text-red-400">
             {medicineDetail
-              ? `Recognized as "${medicineDetail.name}", but it isn't in our catalog — no stock, pricing, or description on file.`
-              : "Could not confidently detect this medicine. Please try a clearer, closer photo."}
+              ? t("detect.recognizedNotInCatalog").replace("{name}", medicineDetail.name)
+              : t("detect.couldNotDetect")}
           </p>
         )}
 
         {medicineDetail?.matched && (
           <>
             <div className="flex items-center justify-between">
-              <span className="text-sm font-semibold text-slate-500">Stock</span>
+              <span className="text-sm font-semibold text-slate-500">{t("detect.stock")}</span>
               <span
                 className={`rounded-full px-3 py-1 text-xs font-bold ${
                   medicineDetail.stock.quantity < LOW_STOCK_THRESHOLD
@@ -101,22 +104,21 @@ export default function MedicineDetectionCard({
                 }`}
               >
                 {medicineDetail.stock.quantity} {medicineDetail.stock.unit}
-                {medicineDetail.stock.quantity < LOW_STOCK_THRESHOLD ? " · Low stock" : ""}
+                {medicineDetail.stock.quantity < LOW_STOCK_THRESHOLD ? ` · ${t("detect.lowStock")}` : ""}
               </span>
             </div>
 
             <div>
-              <p className="text-sm font-bold uppercase tracking-wide text-slate-500">About</p>
+              <p className="text-sm font-bold uppercase tracking-wide text-slate-500">{t("detect.about")}</p>
               <p className="mt-1 text-sm text-slate-600 dark:text-slate-300">
-                {medicineDetail.about ?? "No description on file for this product."}
+                {medicineDetail.about ?? t("detect.noDescription")}
               </p>
             </div>
 
             <div className="rounded-xl border border-blue-100 bg-blue-50 p-4">
-              <p className="text-sm font-bold uppercase tracking-wide text-blue-700">How to Use</p>
+              <p className="text-sm font-bold uppercase tracking-wide text-blue-700">{t("detect.howToUse")}</p>
               <p className="mt-1 text-sm text-blue-800">
-                {medicineDetail.howToUse ??
-                  "Usage instructions aren't stored in our catalog. Please check the product packaging or ask a pharmacist before use."}
+                {medicineDetail.howToUse ?? t("detect.noUsageInstructions")}
               </p>
             </div>
 
@@ -127,7 +129,7 @@ export default function MedicineDetectionCard({
                 disabled={medicineDetail.stock.quantity <= 0}
                 className="w-full rounded-full bg-brand px-4 py-2.5 text-sm font-bold text-white hover:bg-brand-dark disabled:cursor-not-allowed disabled:opacity-50"
               >
-                Add to Cart
+                {t("product.addToCart")}
               </button>
             )}
           </>
@@ -136,7 +138,7 @@ export default function MedicineDetectionCard({
         {topMatches.length > 0 && (
           <details className="rounded-xl border border-slate-100 dark:border-slate-800">
             <summary className="cursor-pointer px-4 py-2.5 text-xs font-bold uppercase tracking-wide text-slate-500">
-              Other possible matches
+              {t("detect.otherMatches")}
             </summary>
             <ul className="space-y-1 px-4 pb-3">
               {topMatches.map((match) => (

@@ -58,6 +58,7 @@ export default function AboutPage() {
             src="/images/Engmedicines/EngMedicine.png"
             alt="AzureMed Hub medical inventory"
             fill
+            sizes="(max-width: 768px) 100vw, 50vw"
             className="object-contain drop-shadow-2xl"
           />
         </div>

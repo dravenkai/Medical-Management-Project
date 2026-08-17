@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { signOut } from "next-auth/react";
 import { LogOut } from "lucide-react";
+import { useLanguage } from "@/components/LanguageContext";
 
 /**
  * Shared logout control used in every dashboard sidebar and the storefront
@@ -24,6 +25,7 @@ import { LogOut } from "lucide-react";
 export default function LogoutButton({ className = "" }: { className?: string }) {
   const [confirming, setConfirming] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { t } = useLanguage();
 
   async function handleConfirm() {
     setLoading(true);
@@ -39,7 +41,7 @@ export default function LogoutButton({ className = "" }: { className?: string })
         className={`flex items-center justify-center gap-2 rounded-xl border border-slate-400 px-4 py-2.5 text-base font-semibold text-slate-900 transition-colors shadow-2xl hover:border-red-200 hover:bg-red-50 hover:text-red-600 ${className}`}
       >
         <LogOut size={16} />
-        Sign out
+        {t("logout.signOut")}
       </button>
 
       {confirming && (
@@ -48,8 +50,8 @@ export default function LogoutButton({ className = "" }: { className?: string })
             <div className="mx-auto mb-4 flex h-12 w-12 items-center justify-center rounded-full bg-red-50 text-red-500">
               <LogOut size={22} />
             </div>
-            <h3 className="text-lg font-bold text-slate-800">Log out now?</h3>
-            <p className="mt-2 text-sm text-slate-500">Are you sure you want to logout?</p>
+            <h3 className="text-lg font-bold text-slate-800">{t("logout.confirmHeading")}</h3>
+            <p className="mt-2 text-sm text-slate-500">{t("logout.confirmBody")}</p>
             <div className="mt-5 grid grid-cols-2 gap-3">
               <button
                 type="button"
@@ -57,7 +59,7 @@ export default function LogoutButton({ className = "" }: { className?: string })
                 disabled={loading}
                 className="rounded-xl border border-slate-300 py-2.5 text-sm font-bold text-slate-700 hover:bg-slate-100 disabled:opacity-50"
               >
-                Cancel
+                {t("logout.cancel")}
               </button>
               <button
                 type="button"
@@ -65,7 +67,7 @@ export default function LogoutButton({ className = "" }: { className?: string })
                 disabled={loading}
                 className="rounded-xl bg-red-600 py-2.5 text-sm font-bold text-white hover:bg-red-700 disabled:opacity-50"
               >
-                {loading ? "Signing out..." : "Sign out"}
+                {loading ? t("logout.signingOut") : t("logout.signOut")}
               </button>
             </div>
           </div>

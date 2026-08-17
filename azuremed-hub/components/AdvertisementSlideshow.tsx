@@ -55,6 +55,7 @@ export default function AdvertisementSlideshow() {
                 src={ad.image_url}
                 alt={title}
                 fill
+                sizes="100vw"
                 className="object-cover"
                 priority={ad.id === ads[0].id}
               />

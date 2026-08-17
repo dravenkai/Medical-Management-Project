@@ -6,10 +6,12 @@ import Image from "next/image";
 import { useRouter, useSearchParams } from "next/navigation";
 import { XIcon, CheckCircle, EyeIcon, EyeOffIcon } from "lucide-react";
 import { validatePasswordStrength, PASSWORD_RULES_TEXT } from "@/lib/passwordRules";
+import { useLanguage } from "@/components/LanguageContext";
 
 function ResetPasswordForm() {
   const router = useRouter();
   const searchParams = useSearchParams();
+  const { t } = useLanguage();
   const token = searchParams.get("token") ?? "";
 
   const [password, setPassword] = useState("");
@@ -29,7 +31,7 @@ function ResetPasswordForm() {
       return;
     }
     if (password !== confirmPassword) {
-      setFieldError("Passwords do not match.");
+      setFieldError(t("resetPassword.passwordsDontMatch"));
       return;
     }
 
@@ -42,7 +44,7 @@ function ResetPasswordForm() {
     setLoading(false);
 
     if (!result.success) {
-      setFieldError(result.message ?? "Could not reset password.");
+      setFieldError(result.message ?? t("resetPassword.couldNotReset"));
       return;
     }
     setDone(true);
@@ -51,15 +53,13 @@ function ResetPasswordForm() {
   if (!token) {
     return (
       <div className="text-center">
-        <h2 className="text-xl font-extrabold text-slate-800">Invalid reset link</h2>
-        <p className="mt-2 text-sm text-slate-500">
-          This link is missing its reset token. Request a new one below.
-        </p>
+        <h2 className="text-xl font-extrabold text-slate-800">{t("resetPassword.invalidLink")}</h2>
+        <p className="mt-2 text-sm text-slate-500">{t("resetPassword.missingToken")}</p>
         <Link
           href="/forgot-password"
           className="mt-6 inline-block w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all"
         >
-          Request New Link
+          {t("resetPassword.requestNewLink")}
         </Link>
       </div>
     );
@@ -71,14 +71,14 @@ function ResetPasswordForm() {
         <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
           <CheckCircle size={24} />
         </div>
-        <h2 className="text-xl font-extrabold text-slate-800">Password reset</h2>
-        <p className="mt-2 text-sm text-slate-500">Your password has been updated. You can sign in now.</p>
+        <h2 className="text-xl font-extrabold text-slate-800">{t("resetPassword.passwordReset")}</h2>
+        <p className="mt-2 text-sm text-slate-500">{t("resetPassword.updatedCanLogin")}</p>
         <button
           type="button"
           onClick={() => router.push("/login")}
           className="mt-6 w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all"
         >
-          Go to Sign In
+          {t("resetPassword.goToLogin")}
         </button>
       </div>
     );
@@ -86,12 +86,12 @@ function ResetPasswordForm() {
 
   return (
     <>
-      <h2 className="text-2xl font-extrabold text-slate-800">Set a new password</h2>
-      <p className="mt-2 text-sm text-slate-500">Choose a strong new password for your account.</p>
+      <h2 className="text-2xl font-extrabold text-slate-800">{t("resetPassword.setNewPassword")}</h2>
+      <p className="mt-2 text-sm text-slate-500">{t("resetPassword.chooseStrongPassword")}</p>
 
       <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
         <div className="relative">
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">New Password</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t("resetPassword.newPassword")}</label>
           <input
             type={showPassword ? "text" : "password"}
             value={password}
@@ -112,7 +112,7 @@ function ResetPasswordForm() {
         </div>
 
         <div>
-          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Confirm Password</label>
+          <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t("resetPassword.confirmPassword")}</label>
           <input
             type={showPassword ? "text" : "password"}
             value={confirmPassword}
@@ -131,7 +131,7 @@ function ResetPasswordForm() {
           disabled={loading}
           className="w-full rounded-xl bg-blue-600 py-4 text-sm font-bold tracking-[0.15em] text-white shadow-xl shadow-blue-100 transition-all hover:bg-blue-700 hover:shadow-blue-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
         >
-          {loading ? "Resetting..." : "Reset Password"}
+          {loading ? t("resetPassword.resetting") : t("resetPassword.resetPasswordBtn")}
         </button>
       </form>
     </>
@@ -140,6 +140,7 @@ function ResetPasswordForm() {
 
 export default function ResetPasswordPage() {
   const router = useRouter();
+  const { t } = useLanguage();
 
   return (
     <div className="fixed inset-0 z-[999] flex items-center justify-center bg-slate-900/40 backdrop-blur-md p-4">
@@ -147,7 +148,7 @@ export default function ResetPasswordPage() {
         <button
           type="button"
           onClick={() => router.push("/login")}
-          aria-label="Close and return to login"
+          aria-label={t("forgotPassword.closeReturnLogin")}
           className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-500 shadow-sm ring-1 ring-slate-100 transition-all hover:bg-slate-100 hover:text-slate-800"
         >
           <XIcon size={20} />
@@ -161,7 +162,7 @@ export default function ResetPasswordPage() {
           </div>
         </div>
 
-        <Suspense fallback={<p className="text-sm text-slate-400">Loading...</p>}>
+        <Suspense fallback={<p className="text-sm text-slate-400">{t("resetPassword.loading")}</p>}>
           <ResetPasswordForm />
         </Suspense>
       </div>

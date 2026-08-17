@@ -4,15 +4,13 @@ import { useEffect, useRef, useState, type DragEvent } from "react";
 import Link from "next/link";
 import { useCart } from "@/components/CartContext";
 import MedicineDetectionCard, { type DetectionResult } from "@/components/MedicineDetectionCard";
+import { useLanguage } from "@/components/LanguageContext";
+import type { TranslationKey } from "@/lib/translations";
 
 type Status = "idle" | "analyzing" | "done" | "error";
 type ScanStatus = "loading" | "scanning" | "locked" | "unavailable" | null;
 
-const STEPS = [
-  "Open the camera — live auto-detect starts scanning right away.",
-  "Hold the pack steady; it captures automatically once it locks onto a confident match.",
-  "Review the matched storefront product, confidence, and stock status.",
-];
+const STEP_KEYS: TranslationKey[] = ["detectPage.step1", "detectPage.step2", "detectPage.step3"];
 
 // Deliberately stricter than HIGH_CONFIDENCE_THRESHOLD (0.92) in
 // app/api/ai/detect/route.ts — this is only the bar for *triggering* an
@@ -35,6 +33,7 @@ interface LiveGuess {
 
 export default function DetectMedicinePage() {
   const { addToCart } = useCart();
+  const { t } = useLanguage();
   const [authChecked, setAuthChecked] = useState(false);
   const [isAuthed, setIsAuthed] = useState(false);
 
@@ -197,7 +196,7 @@ export default function DetectMedicinePage() {
       // attaches the stream once the element actually exists.
       setCameraActive(true);
     } catch {
-      setErrorMessage("Camera access was denied or is unavailable. You can still upload a photo instead.");
+      setErrorMessage(t("detectPage.cameraAccessDenied"));
     }
   }
 
@@ -205,9 +204,10 @@ export default function DetectMedicinePage() {
     if (cameraActive && videoRef.current && streamRef.current) {
       videoRef.current.srcObject = streamRef.current;
       videoRef.current.play().catch(() => {
-        setErrorMessage("Could not start the camera preview. You can still upload a photo instead.");
+        setErrorMessage(t("detectPage.couldNotStartPreview"));
       });
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cameraActive]);
 
   function stopCamera() {
@@ -239,11 +239,11 @@ export default function DetectMedicinePage() {
 
   function handleFile(file: File) {
     if (!file.type.startsWith("image/")) {
-      setErrorMessage("Please choose an image file (JPEG, PNG, or WebP).");
+      setErrorMessage(t("detectPage.chooseImageFile"));
       return;
     }
     if (file.size > 5 * 1024 * 1024) {
-      setErrorMessage("Image must be under 5MB.");
+      setErrorMessage(t("detectPage.imageTooLarge"));
       return;
     }
     setErrorMessage(null);
@@ -266,7 +266,7 @@ export default function DetectMedicinePage() {
 
       if (!body.success) {
         setStatus("error");
-        setErrorMessage(body.message ?? "Detection failed.");
+        setErrorMessage(body.message ?? t("detectPage.detectionFailed"));
         return;
       }
 
@@ -274,7 +274,7 @@ export default function DetectMedicinePage() {
       setStatus("done");
     } catch {
       setStatus("error");
-      setErrorMessage("Network error while contacting the AI service.");
+      setErrorMessage(t("detectPage.networkError"));
     }
   }
 
@@ -297,15 +297,13 @@ export default function DetectMedicinePage() {
   if (authChecked && !isAuthed) {
     return (
       <div className="mx-auto max-w-md px-6 py-24 text-center">
-        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">Sign in required</h1>
-        <p className="mt-2 text-slate-500">
-          Create a free account to use AI medicine detection.
-        </p>
+        <h1 className="text-2xl font-bold text-slate-800 dark:text-slate-100">{t("detectPage.signInRequired")}</h1>
+        <p className="mt-2 text-slate-500">{t("detectPage.createFreeAccount")}</p>
         <Link
           href="/login"
           className="mt-6 inline-block rounded-full bg-brand px-6 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark"
         >
-          Sign in
+          {t("reviewForm.signIn")}
         </Link>
       </div>
     );
@@ -313,11 +311,8 @@ export default function DetectMedicinePage() {
 
   return (
     <div className="mx-auto max-w-5xl px-6 pt-32 pb-12 sm:px-10">
-      <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">Detect Medicine</h1>
-      <p className="mt-2 text-slate-500">
-        Start the camera and hold a medicine pack, strip, or bottle steady — it captures and detects
-        automatically once it's confident. You can still capture manually or upload a photo instead.
-      </p>
+      <h1 className="text-3xl font-extrabold text-slate-800 dark:text-slate-100">{t("detectPage.heading")}</h1>
+      <p className="mt-2 text-slate-500">{t("detectPage.subheading")}</p>
 
       <div className="mt-8 grid gap-6 lg:grid-cols-[1.1fr_0.9fr]">
         {/* Capture / upload panel */}
@@ -337,16 +332,14 @@ export default function DetectMedicinePage() {
               <video ref={videoRef} className="h-full w-full object-cover" muted playsInline />
             ) : previewUrl ? (
               // eslint-disable-next-line @next/next/no-img-element
-              <img src={previewUrl} alt="Captured medicine" className="h-full w-full object-contain bg-white" />
+              <img src={previewUrl} alt={t("detectPage.capturedAlt")} className="h-full w-full object-contain bg-white" />
             ) : (
               <div className="px-6 text-slate-300">
                 <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-full border border-slate-600">
                   📷
                 </div>
-                <p className="font-semibold">Camera preview</p>
-                <p className="mt-1 text-sm text-slate-400">
-                  Start the camera or drag a medicine photo here for live capture and AI detection.
-                </p>
+                <p className="font-semibold">{t("detectPage.cameraPreview")}</p>
+                <p className="mt-1 text-sm text-slate-400">{t("detectPage.cameraPreviewHint")}</p>
               </div>
             )}
 
@@ -354,7 +347,7 @@ export default function DetectMedicinePage() {
               <div className="absolute inset-0 flex items-center justify-center bg-slate-900/70">
                 <div className="flex items-center gap-3 text-white">
                   <span className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Analyzing image...
+                  {t("detectPage.analyzingImage")}
                 </div>
               </div>
             )}
@@ -375,19 +368,21 @@ export default function DetectMedicinePage() {
                   {scanStatus === "loading" && (
                     <>
                       <span className="h-3.5 w-3.5 animate-spin rounded-full border-2 border-white/60 border-t-white" />
-                      Loading auto-detect…
+                      {t("detectPage.loadingAutoDetect")}
                     </>
                   )}
                   {scanStatus === "scanning" && (
                     <>
                       <span className="h-2 w-2 animate-pulse rounded-full bg-white" />
                       {liveGuess
-                        ? `Scanning: ${liveGuess.label} · ${Math.round(liveGuess.confidence * 100)}%`
-                        : "Scanning for a match…"}
+                        ? t("detectPage.scanningLabel")
+                            .replace("{label}", liveGuess.label)
+                            .replace("{pct}", String(Math.round(liveGuess.confidence * 100)))
+                        : t("detectPage.scanningForMatch")}
                     </>
                   )}
-                  {scanStatus === "locked" && <>Locked — capturing…</>}
-                  {scanStatus === "unavailable" && "Auto-detect unavailable — use Capture + Detect"}
+                  {scanStatus === "locked" && t("detectPage.locked")}
+                  {scanStatus === "unavailable" && t("detectPage.autoDetectUnavailable")}
                 </div>
               </div>
             )}
@@ -400,7 +395,7 @@ export default function DetectMedicinePage() {
                 onClick={startCamera}
                 className="rounded-full bg-slate-900 px-5 py-2.5 text-sm font-semibold text-white hover:bg-slate-800"
               >
-                Start Camera
+                {t("detectPage.startCamera")}
               </button>
             ) : (
               <button
@@ -408,7 +403,7 @@ export default function DetectMedicinePage() {
                 onClick={captureFromCamera}
                 className="rounded-full bg-brand px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-dark"
               >
-                Capture + Detect
+                {t("detectPage.captureDetect")}
               </button>
             )}
             <button
@@ -416,7 +411,7 @@ export default function DetectMedicinePage() {
               onClick={() => fileInputRef.current?.click()}
               className="rounded-full border border-brand-muted px-5 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 dark:text-slate-200 dark:hover:bg-slate-800"
             >
-              Upload Photo
+              {t("detectPage.uploadPhoto")}
             </button>
             {(previewUrl || cameraActive) && (
               <button
@@ -427,7 +422,7 @@ export default function DetectMedicinePage() {
                 }}
                 className="rounded-full border border-transparent px-5 py-2.5 text-sm font-semibold text-red-600 hover:bg-red-50"
               >
-                Clear Preview
+                {t("detectPage.clearPreviewBtn")}
               </button>
             )}
             <input
@@ -452,27 +447,25 @@ export default function DetectMedicinePage() {
         <div className="space-y-6">
           <div className="rounded-2xl border border-brand-muted bg-white p-5 dark:bg-slate-900">
             <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">
-              How users will use it
+              {t("detectPage.howUsersWillUseIt")}
             </h2>
             <ol className="mt-3 space-y-3">
-              {STEPS.map((step, index) => (
-                <li key={step} className="flex gap-3 text-sm text-slate-600 dark:text-slate-300">
+              {STEP_KEYS.map((stepKey, index) => (
+                <li key={stepKey} className="flex gap-3 text-sm text-slate-600 dark:text-slate-300">
                   <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-brand/10 text-xs font-bold text-brand">
                     {String(index + 1).padStart(2, "0")}
                   </span>
-                  {step}
+                  {t(stepKey)}
                 </li>
               ))}
             </ol>
           </div>
 
           <div className="rounded-2xl border border-brand-muted bg-white p-5 dark:bg-slate-900">
-            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">Detection Result</h2>
+            <h2 className="text-sm font-bold uppercase tracking-wide text-slate-500">{t("detectPage.detectionResult")}</h2>
 
             {status === "idle" && (
-              <p className="mt-3 text-sm text-slate-400">
-                Capture or upload a medicine image to see live AI predictions here.
-              </p>
+              <p className="mt-3 text-sm text-slate-400">{t("detectPage.idleHint")}</p>
             )}
 
             {status === "analyzing" && (
@@ -484,7 +477,7 @@ export default function DetectMedicinePage() {
             )}
 
             {status === "error" && (
-              <p className="mt-3 text-sm text-red-600">Could not complete detection. Try again.</p>
+              <p className="mt-3 text-sm text-red-600">{t("detectPage.errorHint")}</p>
             )}
 
             {status === "done" && result && (

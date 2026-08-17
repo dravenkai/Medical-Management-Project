@@ -6,6 +6,7 @@ import { FaDumbbell, FaHeart, FaBaby } from "react-icons/fa6";
 import type { IconType } from "react-icons";
 import Heading from "@/components/Heading";
 import { useLanguage } from "@/components/LanguageContext";
+import type { TranslationKey } from "@/lib/translations";
 
 // Only 3 pieces of category art exist from the old taxonomy. The other 3
 // categories get a generic icon badge instead (CATEGORY_ICON below) so every
@@ -22,6 +23,20 @@ const CATEGORY_ICON: Record<string, IconType> = {
   "Fitness & Supplement": FaDumbbell,
   "Sexual Wellness": FaHeart,
   "Mother & Child": FaBaby,
+};
+
+// row.category is the raw English string stored in the DB — these are the
+// same nav.* translation keys the nav bar's category tabs already use for
+// this exact set of 6 names (see lib/translations.ts), reused here so the
+// card titles switch to Myanmar along with the rest of the page instead of
+// staying stuck in English.
+const CATEGORY_LABEL_KEY: Record<string, TranslationKey> = {
+  "Fever, Cough & Cold": "nav.feverCoughCold",
+  "Fitness & Supplement": "nav.fitnessSupplement",
+  "Sexual Wellness": "nav.sexualWellness",
+  "Mother & Child": "nav.motherChild",
+  "Traditional Medicine": "nav.traditionalMedicine",
+  "Personal Care & Equipment": "nav.personalCareEquipment",
 };
 
 // First Aid/Topical/Vitamins exist in the DB (from later product imports)
@@ -62,6 +77,12 @@ export default function CategoriesSection({ categoryRows }: { categoryRows: Cate
                     alt={row.category}
                     width={280}
                     height={200}
+                    // className's w-auto overrides the width dimension (so the
+                    // image scales by height alone, preserving its real aspect
+                    // ratio) — style width:auto mirrors that for Next's own
+                    // aspect-ratio inference, which otherwise assumes both the
+                    // width and height props are literally being honored.
+                    style={{ width: "auto" }}
                     className="absolute bottom-0 left-1/2 -translate-x-1/2 max-h-[200px] w-auto object-contain"
                   />
                 ) : (
@@ -73,7 +94,9 @@ export default function CategoriesSection({ categoryRows }: { categoryRows: Cate
                 )}
               </div>
               <div className="bg-zinc-100 pt-16 p-8 rounded-xl border border-zinc-200 flex-1">
-                <h3 className="text-zinc-800 text-2xl font-bold">{row.category}</h3>
+                <h3 className="text-zinc-800 text-2xl font-bold">
+                  {CATEGORY_LABEL_KEY[row.category] ? t(CATEGORY_LABEL_KEY[row.category]) : row.category}
+                </h3>
                 <p className="text-zinc-600 mt-3 mb-6">
                   {row.product_count} {t("categories.productsAvailable")}
                 </p>

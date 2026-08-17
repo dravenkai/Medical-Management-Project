@@ -3,6 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useState, type ReactNode } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/components/LanguageContext";
 
 export interface CartItem {
   id: number; // cart_items.id
@@ -61,6 +62,7 @@ function wishlistKey(userId: string) {
 export function CartProvider({ children }: { children: ReactNode }) {
   const { data: session } = useSession();
   const router = useRouter();
+  const { t } = useLanguage();
   const userId = session?.user?.id;
 
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
@@ -78,8 +80,20 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setCartItems([]);
       return;
     }
-    const result = await fetch("/api/cart").then((r) => r.json());
-    if (result.success) setCartItems(result.data.items);
+    // Called on every mount, after every mutation, AND once a second by
+    // ReservationCountdown's onExpire in CartPanel — a bare fetch() here
+    // means any transient network hiccup (dev-server hot-reload dropping an
+    // in-flight request, a brief connectivity blip) throws an unhandled
+    // rejection straight up to Next's dev error overlay ("TypeError:
+    // NetworkError when attempting to fetch resource"). Failing to refresh
+    // isn't fatal — the cart just stays as it was — so this degrades
+    // silently instead of crashing the page.
+    try {
+      const result = await fetch("/api/cart").then((r) => r.json());
+      if (result.success) setCartItems(result.data.items);
+    } catch (error) {
+      console.error("[cart] refresh failed:", error);
+    }
   }, [userId]);
 
   useEffect(() => {
@@ -102,17 +116,23 @@ export function CartProvider({ children }: { children: ReactNode }) {
         router.push("/login");
         return;
       }
-      const result = await fetch("/api/cart/items", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ product_id: product.id, qty }),
-      }).then((r) => r.json());
-
-      if (!result.success) {
-        showToast(result.message ?? "Could not add to cart");
+      let result;
+      try {
+        result = await fetch("/api/cart/items", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ product_id: product.id, qty }),
+        }).then((r) => r.json());
+      } catch {
+        showToast(t("toast.networkErrorAddToCart"));
         return;
       }
-      showToast("Item added to cart");
+
+      if (!result.success) {
+        showToast(result.message ?? t("toast.couldNotAddToCart"));
+        return;
+      }
+      showToast(t("toast.itemAddedToCart"));
       await refreshCart();
       // Product listing/detail pages are Server Components — they fetch
       // stock_qty/reserved_qty once per page load and have no way to know a
@@ -122,42 +142,50 @@ export function CartProvider({ children }: { children: ReactNode }) {
       // instead of only on the next real navigation.
       router.refresh();
     },
-    [userId, router, refreshCart, showToast]
+    [userId, router, refreshCart, showToast, t]
   );
 
   const updateCartQty = useCallback(
     async (medicineId: number, qty: number) => {
-      if (qty <= 0) {
-        await fetch(`/api/cart/items/${medicineId}`, { method: "DELETE" });
-      } else {
-        const result = await fetch(`/api/cart/items/${medicineId}`, {
-          method: "PATCH",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ qty }),
-        }).then((r) => r.json());
-        // Not fatal either way — refreshCart() below re-syncs the true DB
-        // state regardless, but without this the user gets no explanation
-        // when a quantity bump silently gets rejected or clamped (e.g. stock
-        // ran out or dropped below what they asked for after page load).
-        if (!result.success) {
-          showToast(result.message ?? "Could not update quantity");
-        } else if (result.data?.qty && result.data.qty < qty) {
-          showToast(`Only ${result.data.qty} in stock`);
+      try {
+        if (qty <= 0) {
+          await fetch(`/api/cart/items/${medicineId}`, { method: "DELETE" });
+        } else {
+          const result = await fetch(`/api/cart/items/${medicineId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ qty }),
+          }).then((r) => r.json());
+          // Not fatal either way — refreshCart() below re-syncs the true DB
+          // state regardless, but without this the user gets no explanation
+          // when a quantity bump silently gets rejected or clamped (e.g. stock
+          // ran out or dropped below what they asked for after page load).
+          if (!result.success) {
+            showToast(result.message ?? t("toast.couldNotUpdateQuantity"));
+          } else if (result.data?.qty && result.data.qty < qty) {
+            showToast(t("toast.onlyInStock").replace("{qty}", String(result.data.qty)));
+          }
         }
+      } catch {
+        showToast(t("toast.networkErrorUpdateQuantity"));
       }
       await refreshCart();
       router.refresh();
     },
-    [refreshCart, router, showToast]
+    [refreshCart, router, showToast, t]
   );
 
   const removeFromCart = useCallback(
     async (medicineId: number) => {
-      await fetch(`/api/cart/items/${medicineId}`, { method: "DELETE" });
+      try {
+        await fetch(`/api/cart/items/${medicineId}`, { method: "DELETE" });
+      } catch {
+        showToast(t("toast.networkErrorRemoveItem"));
+      }
       await refreshCart();
       router.refresh();
     },
-    [refreshCart, router]
+    [refreshCart, router, showToast, t]
   );
 
   const isFavorite = useCallback((id: number) => wishlistItems.some((item) => item.id === id), [wishlistItems]);
@@ -171,14 +199,14 @@ export function CartProvider({ children }: { children: ReactNode }) {
       setWishlistItems((prev) => {
         const exists = prev.some((item) => item.id === product.id);
         if (exists) {
-          showToast("Removed from favorites");
+          showToast(t("toast.removedFromFavorites"));
           return prev.filter((item) => item.id !== product.id);
         }
-        showToast("Added to favorites");
+        showToast(t("toast.addedToFavorites"));
         return [...prev, { ...product, quantity: 1 }];
       });
     },
-    [userId, router, showToast]
+    [userId, router, showToast, t]
   );
 
   const removeFromWishlist = useCallback((id: number) => {

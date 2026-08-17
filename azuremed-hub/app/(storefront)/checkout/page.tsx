@@ -5,11 +5,13 @@ import { useRouter } from "next/navigation";
 import Image from "next/image";
 import { Truck, CreditCard, Lock, CheckCircle, User, Phone, Mail, Upload, Tag } from "lucide-react";
 import { useCart } from "@/components/CartContext";
+import { useLanguage } from "@/components/LanguageContext";
 
 /** Ported from Medical_Product/src/components/CheckoutPage/CheckoutPage.jsx. */
 export default function CheckoutPage() {
   const router = useRouter();
   const { cartItems, removeFromCart } = useCart();
+  const { t } = useLanguage();
 
   const [paymentMethod, setPaymentMethod] = useState<"kpay" | "cod">("kpay");
   const [formData, setFormData] = useState({ fullName: "", email: "", phone: "", city: "Yangon", address: "" });
@@ -53,7 +55,7 @@ export default function CheckoutPage() {
     }).then((r) => r.json());
     setCheckingPromo(false);
     if (!result.success) {
-      setPromoError(result.message ?? "Invalid promo code");
+      setPromoError(result.message ?? t("checkout.invalidPromoCode"));
       setAppliedPromo(null);
       return;
     }
@@ -85,7 +87,7 @@ export default function CheckoutPage() {
   async function handleConfirmPayment() {
     setNotice(null);
     if (cartItems.length === 0) {
-      setNotice({ type: "error", message: "Your cart is empty. Please add items before checkout." });
+      setNotice({ type: "error", message: t("checkout.cartEmptyError") });
       return;
     }
 
@@ -93,11 +95,11 @@ export default function CheckoutPage() {
     const missing = required.filter((key) => !formData[key].trim());
     if (missing.length > 0) {
       setMissingFields(Object.fromEntries(missing.map((key) => [key, true])));
-      setNotice({ type: "error", message: "Please fill all required shipping details." });
+      setNotice({ type: "error", message: t("checkout.fillRequiredFields") });
       return;
     }
     if (paymentMethod === "kpay" && !proofFile) {
-      setNotice({ type: "error", message: "Please upload your KBZ Pay payment screenshot." });
+      setNotice({ type: "error", message: t("checkout.uploadScreenshotRequired") });
       return;
     }
 
@@ -113,7 +115,7 @@ export default function CheckoutPage() {
     setSubmitting(false);
 
     if (!result.success) {
-      setNotice({ type: "error", message: result.message ?? "Order could not be placed." });
+      setNotice({ type: "error", message: result.message ?? t("checkout.orderCouldNotBePlaced") });
       return;
     }
 
@@ -124,8 +126,8 @@ export default function CheckoutPage() {
     <div className="min-h-screen bg-[#f8fafc] text-slate-900 pb-20 pt-32">
       <main className="max-w-7xl mx-auto px-4 py-8 lg:px-8">
         <div className="mb-10">
-          <h1 className="text-4xl font-black tracking-tight text-slate-900 mb-2">Checkout</h1>
-          <p className="text-slate-500">Please provide your delivery information to complete the order.</p>
+          <h1 className="text-4xl font-black tracking-tight text-slate-900 mb-2">{t("checkout.heading")}</h1>
+          <p className="text-slate-500">{t("checkout.subheading")}</p>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
@@ -135,16 +137,16 @@ export default function CheckoutPage() {
                 <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
                   <Truck size={24} />
                 </div>
-                <h2 className="text-2xl font-black">Shipping Details</h2>
+                <h2 className="text-2xl font-black">{t("checkout.shippingDetails")}</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <InputField label="Full Name" name="fullName" placeholder="Aung Kyaw" icon={<User size={18} />} onChange={handleInputChange} value={formData.fullName} hasError={missingFields.fullName} />
-                <InputField label="Email Address" name="email" placeholder="aung@example.com" type="email" icon={<Mail size={18} />} onChange={handleInputChange} value={formData.email} hasError={missingFields.email} />
-                <InputField label="Phone Number" name="phone" placeholder="+95 9..." type="tel" icon={<Phone size={18} />} onChange={handleInputChange} value={formData.phone} hasError={missingFields.phone} />
+                <InputField label={t("checkout.fullName")} name="fullName" placeholder="Aung Kyaw" icon={<User size={18} />} onChange={handleInputChange} value={formData.fullName} hasError={missingFields.fullName} />
+                <InputField label={t("checkout.emailAddress")} name="email" placeholder="aung@example.com" type="email" icon={<Mail size={18} />} onChange={handleInputChange} value={formData.email} hasError={missingFields.email} />
+                <InputField label={t("checkout.phoneNumber")} name="phone" placeholder="+95 9..." type="tel" icon={<Phone size={18} />} onChange={handleInputChange} value={formData.phone} hasError={missingFields.phone} />
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-sm font-black ml-1 uppercase tracking-tighter text-slate-500">City</label>
+                  <label className="text-sm font-black ml-1 uppercase tracking-tighter text-slate-500">{t("checkout.city")}</label>
                   <select
                     name="city"
                     value={formData.city}
@@ -158,7 +160,7 @@ export default function CheckoutPage() {
                 </div>
 
                 <div className="md:col-span-2 flex flex-col gap-2">
-                  <label className="text-sm font-black ml-1 uppercase tracking-tighter text-slate-500">Delivery Address</label>
+                  <label className="text-sm font-black ml-1 uppercase tracking-tighter text-slate-500">{t("checkout.deliveryAddress")}</label>
                   <textarea
                     name="address"
                     value={formData.address}
@@ -167,7 +169,7 @@ export default function CheckoutPage() {
                     className={`p-5 rounded-2xl bg-slate-50 focus:ring-2 focus:ring-blue-500 w-full font-medium border ${
                       missingFields.address ? "border-red-500" : "border-slate-100"
                     }`}
-                    placeholder="House number, Street, Township..."
+                    placeholder={t("checkout.addressPlaceholder")}
                   />
                 </div>
               </div>
@@ -178,20 +180,20 @@ export default function CheckoutPage() {
                 <div className="p-3 bg-blue-50 text-blue-600 rounded-2xl">
                   <CreditCard size={24} />
                 </div>
-                <h2 className="text-2xl font-black">Payment Method</h2>
+                <h2 className="text-2xl font-black">{t("checkout.paymentMethod")}</h2>
               </div>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <PaymentOption
-                  title="KBZ Pay"
-                  description="Instant mobile transfer"
+                  title={t("checkout.kbzPay")}
+                  description={t("checkout.kbzPayDesc")}
                   selected={paymentMethod === "kpay"}
                   onClick={() => setPaymentMethod("kpay")}
                   logo={<div className="bg-[#0056b3] text-white text-[10px] font-black px-2 py-1 rounded">KPAY</div>}
                 />
                 <PaymentOption
-                  title="Cash on Delivery"
-                  description="Pay when medicine arrives"
+                  title={t("checkout.cashOnDelivery")}
+                  description={t("checkout.cashOnDeliveryDesc")}
                   selected={paymentMethod === "cod"}
                   onClick={() => setPaymentMethod("cod")}
                   logo={<Truck size={22} className="text-slate-400" />}
@@ -199,13 +201,13 @@ export default function CheckoutPage() {
               </div>
               {paymentMethod === "kpay" && (
                 <div className="mt-6 rounded-2xl border border-slate-200 bg-slate-50 p-4 text-sm text-slate-700">
-                  <p className="font-black text-blue-700">KBZ Pay Number</p>
+                  <p className="font-black text-blue-700">{t("checkout.kbzPayNumber")}</p>
                   <p className="mt-1 font-semibold">+95 9 456 789 123</p>
-                  <p className="mt-3 font-black text-blue-700">Demo Bank Account</p>
-                  <p className="mt-1">Bank: KBZ Bank · AzureMed Hub Demo · 009 123 456 789</p>
+                  <p className="mt-3 font-black text-blue-700">{t("checkout.demoBankAccount")}</p>
+                  <p className="mt-1">{t("checkout.bankDetails")}</p>
 
                   <label className="mt-5 flex flex-col gap-2">
-                    <span className="font-black text-blue-700">Upload Payment Screenshot</span>
+                    <span className="font-black text-blue-700">{t("checkout.uploadPaymentScreenshot")}</span>
                     <div className="flex items-center gap-4 rounded-2xl border-2 border-dashed border-blue-200 bg-white p-4 cursor-pointer hover:border-blue-400 transition-colors">
                       {proofPreview ? (
                         <Image src={proofPreview} alt="Payment proof preview" width={56} height={56} className="size-14 rounded-lg object-cover shrink-0" unoptimized />
@@ -215,14 +217,12 @@ export default function CheckoutPage() {
                         </div>
                       )}
                       <span className="text-xs font-semibold text-slate-500">
-                        {proofFile ? proofFile.name : "Click to select the screenshot from your KBZ Pay app"}
+                        {proofFile ? proofFile.name : t("checkout.clickToSelectScreenshot")}
                       </span>
                       <input type="file" accept="image/jpeg,image/png,image/webp" onChange={handleProofChange} className="hidden" />
                     </div>
                   </label>
-                  <p className="mt-2 text-xs text-slate-500">
-                    An Admin will manually confirm this payment before your order ships.
-                  </p>
+                  <p className="mt-2 text-xs text-slate-500">{t("checkout.adminWillConfirm")}</p>
                 </div>
               )}
               {notice && (
@@ -239,20 +239,20 @@ export default function CheckoutPage() {
 
           <div className="lg:col-span-5">
             <div className="sticky top-28 p-10 rounded-[3rem] border border-slate-100 bg-white shadow-2xl shadow-blue-900/5">
-              <h3 className="text-2xl font-black mb-8">Order Summary</h3>
+              <h3 className="text-2xl font-black mb-8">{t("checkout.orderSummary")}</h3>
 
               <div className="space-y-6 mb-8 max-h-[300px] overflow-y-auto pr-2">
                 {cartItems.length === 0 ? (
-                  <div className="rounded-2xl border border-slate-100 p-6 text-center text-slate-500">Your cart is empty.</div>
+                  <div className="rounded-2xl border border-slate-100 p-6 text-center text-slate-500">{t("cart.empty")}</div>
                 ) : (
                   cartItems.map((item) => (
                     <div key={item.id} className="flex items-center gap-5 group">
                       <div className="relative size-16 rounded-2xl bg-slate-50 overflow-hidden shrink-0">
-                        {item.image_url && <Image src={item.image_url} fill className="object-contain" alt={item.name} />}
+                        {item.image_url && <Image src={item.image_url} fill sizes="64px" className="object-contain" alt={item.name} />}
                       </div>
                       <div className="flex-1">
                         <p className="font-black text-slate-800">{item.name}</p>
-                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">Qty {item.quantity}</p>
+                        <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">{t("checkout.qty")} {item.quantity}</p>
                       </div>
                       <p className="font-black text-slate-900">{(item.price * item.quantity).toLocaleString()} MMK</p>
                       <button
@@ -260,7 +260,7 @@ export default function CheckoutPage() {
                         onClick={() => removeFromCart(item.medicineId)}
                         className="text-xs text-red-500 hover:underline"
                       >
-                        Remove
+                        {t("checkout.remove")}
                       </button>
                     </div>
                   ))
@@ -268,7 +268,7 @@ export default function CheckoutPage() {
               </div>
 
               <div className="mb-4">
-                <label className="text-xs font-black ml-1 uppercase tracking-tighter text-slate-500">Promo Code</label>
+                <label className="text-xs font-black ml-1 uppercase tracking-tighter text-slate-500">{t("checkout.promoCode")}</label>
                 {/* Merged into one bordered control instead of two separate
                     rounded boxes with a gap — same functionality, smaller
                     footprint. */}
@@ -278,7 +278,7 @@ export default function CheckoutPage() {
                     type="text"
                     value={promoInput}
                     onChange={(e) => setPromoInput(e.target.value.toUpperCase())}
-                    placeholder="Enter code"
+                    placeholder={t("checkout.enterCode")}
                     className="h-full min-w-0 flex-1 bg-transparent px-2 text-xs font-bold outline-none"
                   />
                   <button
@@ -287,33 +287,35 @@ export default function CheckoutPage() {
                     disabled={checkingPromo}
                     className="shrink-0 rounded-md bg-slate-800 px-3 py-1 text-[11px] font-bold text-white hover:bg-slate-900 disabled:opacity-50"
                   >
-                    {checkingPromo ? "..." : "Apply"}
+                    {checkingPromo ? "..." : t("checkout.apply")}
                   </button>
                 </div>
                 {promoError && <p className="mt-2 text-xs font-semibold text-red-600">{promoError}</p>}
                 {appliedPromo && (
                   <p className="mt-2 text-xs font-semibold text-emerald-600">
-                    &quot;{appliedPromo.code}&quot; applied — {appliedPromo.discount_percent}% off
+                    {t("checkout.promoApplied")
+                      .replace("{code}", appliedPromo.code)
+                      .replace("{percent}", String(appliedPromo.discount_percent))}
                   </p>
                 )}
               </div>
 
               <div className="space-y-4 pt-8 border-t border-slate-50">
-                <SummaryRow label="Subtotal" value={`${subtotal.toLocaleString()} MMK`} />
+                <SummaryRow label={t("cart.subtotal")} value={`${subtotal.toLocaleString()} MMK`} />
                 <SummaryRow
-                  label="Delivery Fee"
-                  value={effectiveDeliveryFee > 0 ? `${effectiveDeliveryFee.toLocaleString()} MMK` : "FREE"}
+                  label={t("checkout.deliveryFee")}
+                  value={effectiveDeliveryFee > 0 ? `${effectiveDeliveryFee.toLocaleString()} MMK` : t("checkout.free")}
                   isFree={effectiveDeliveryFee === 0}
                 />
                 {deliveryFee > 0 && !qualifiesForFreeDelivery && freeDeliveryThreshold > 0 && cartItems.length > 0 && (
                   <p className="-mt-2 text-xs font-semibold text-blue-600">
-                    Add {amountToFreeDelivery.toLocaleString()} MMK more to get FREE delivery.
+                    {t("checkout.addMoreForFreeDelivery").replace("{amount}", amountToFreeDelivery.toLocaleString())}
                   </p>
                 )}
-                <SummaryRow label="Government Tax (5%)" value={`${tax.toLocaleString()} MMK`} />
-                {discount > 0 && <SummaryRow label="Promo Discount" value={`-${discount.toLocaleString()} MMK`} isFree />}
+                <SummaryRow label={t("checkout.governmentTax")} value={`${tax.toLocaleString()} MMK`} />
+                {discount > 0 && <SummaryRow label={t("checkout.promoDiscount")} value={`-${discount.toLocaleString()} MMK`} isFree />}
                 <div className="flex justify-between items-center pt-6 border-t border-slate-100 mt-4">
-                  <span className="text-lg font-black text-slate-400 uppercase tracking-tighter">Total Amount</span>
+                  <span className="text-lg font-black text-slate-400 uppercase tracking-tighter">{t("checkout.totalAmount")}</span>
                   <span className="text-4xl font-black text-blue-600">
                     {total.toLocaleString()} <span className="text-sm">MMK</span>
                   </span>
@@ -327,13 +329,13 @@ export default function CheckoutPage() {
                   disabled={submitting}
                   className="w-full bg-blue-600 hover:bg-blue-700 text-white font-black py-5 rounded-[2rem] shadow-xl shadow-blue-200 transition-all disabled:opacity-50"
                 >
-                  {submitting ? "Placing order..." : paymentMethod === "kpay" ? "Confirm KPay Payment" : "Confirm Cash on Delivery"}
+                  {submitting ? t("checkout.placingOrder") : paymentMethod === "kpay" ? t("checkout.confirmKpay") : t("checkout.confirmCod")}
                 </button>
               </div>
 
               <div className="flex items-center justify-center gap-2 mt-8 text-slate-300">
                 <Lock size={14} />
-                <span className="text-[10px] font-black uppercase tracking-widest">Secure 256-bit SSL Connection</span>
+                <span className="text-[10px] font-black uppercase tracking-widest">{t("checkout.secureConnection")}</span>
               </div>
             </div>
           </div>

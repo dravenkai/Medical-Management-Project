@@ -63,10 +63,23 @@ async function dump() {
     if (rows.length === 0) continue;
 
     const columns = Object.keys(rows[0]);
+    // ON DUPLICATE KEY UPDATE, not a plain INSERT — makes restore
+    // idempotent (safe to re-run, e.g. after a partial failure) and
+    // resilient to rows the target schema already seeded itself, like
+    // store_settings' default id=1 row from azuremed_schema.sql's own
+    // INSERT IGNORE. A plain INSERT hitting that pre-existing row aborts
+    // the whole multi-statement batch on the duplicate-key error and
+    // silently skips every table listed after it.
+    const updateClause = columns
+      .filter((c) => c !== "id")
+      .map((c) => `\`${c}\` = VALUES(\`${c}\`)`)
+      .join(", ");
     lines.push(`-- ${table}: ${rows.length} rows`);
     for (const row of rows) {
       const values = columns.map((col) => connection.escape(row[col])).join(", ");
-      lines.push(`INSERT INTO \`${table}\` (${columns.map((c) => `\`${c}\``).join(", ")}) VALUES (${values});`);
+      lines.push(
+        `INSERT INTO \`${table}\` (${columns.map((c) => `\`${c}\``).join(", ")}) VALUES (${values}) ON DUPLICATE KEY UPDATE ${updateClause};`
+      );
     }
     lines.push("");
   }

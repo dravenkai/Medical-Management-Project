@@ -5,11 +5,13 @@ import Link from "next/link";
 import Image from "next/image";
 import { XIcon, Mail } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useLanguage } from "@/components/LanguageContext";
 
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
+  const { t } = useLanguage();
   const [email, setEmail] = useState("");
   const [fieldError, setFieldError] = useState("");
   const [loading, setLoading] = useState(false);
@@ -21,11 +23,11 @@ export default function ForgotPasswordPage() {
     setFieldError("");
 
     if (!email.trim()) {
-      setFieldError("Email is required.");
+      setFieldError(t("forgotPassword.emailRequired"));
       return;
     }
     if (!EMAIL_PATTERN.test(email.trim())) {
-      setFieldError("Enter a valid email address.");
+      setFieldError(t("forgotPassword.emailInvalid"));
       return;
     }
 
@@ -51,7 +53,7 @@ export default function ForgotPasswordPage() {
         <button
           type="button"
           onClick={() => router.push("/login")}
-          aria-label="Close and return to login"
+          aria-label={t("forgotPassword.closeReturnLogin")}
           className="absolute right-5 top-5 flex h-10 w-10 items-center justify-center rounded-full bg-slate-50 text-slate-500 shadow-sm ring-1 ring-slate-100 transition-all hover:bg-slate-100 hover:text-slate-800"
         >
           <XIcon size={20} />
@@ -70,20 +72,26 @@ export default function ForgotPasswordPage() {
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-emerald-50 text-emerald-500">
               <Mail size={24} />
             </div>
-            <h2 className="text-xl font-extrabold text-slate-800">Check your email</h2>
+            <h2 className="text-xl font-extrabold text-slate-800">{t("forgotPassword.checkEmail")}</h2>
             <p className="mt-2 text-sm text-slate-500">
-              If an account exists for <span className="font-semibold text-slate-700">{email}</span>, a password
-              reset link has been sent. It expires in 30 minutes.
+              {(() => {
+                const [before, after] = t("forgotPassword.emailSentInfo").split("{email}");
+                return (
+                  <>
+                    {before}
+                    <span className="font-semibold text-slate-700">{email}</span>
+                    {after}
+                  </>
+                );
+              })()}
             </p>
 
             {devResetUrl && (
               <div className="mt-4 rounded-xl border border-amber-200 bg-amber-50 p-4 text-left">
                 <p className="text-[10px] font-black uppercase tracking-widest text-amber-700">
-                  Dev mode — no SMTP configured
+                  {t("forgotPassword.devModeNoSmtp")}
                 </p>
-                <p className="mt-1 text-xs text-amber-700">
-                  This link only appears here because email sending isn&apos;t set up. It will not show in production.
-                </p>
+                <p className="mt-1 text-xs text-amber-700">{t("forgotPassword.devModeInfo")}</p>
                 <a
                   href={devResetUrl}
                   className="mt-2 block truncate text-xs font-bold text-blue-600 underline hover:text-blue-700"
@@ -97,22 +105,20 @@ export default function ForgotPasswordPage() {
               href="/login"
               className="mt-6 inline-block w-full rounded-xl bg-blue-600 py-3 text-sm font-bold text-white shadow-lg shadow-blue-100 hover:bg-blue-700 transition-all"
             >
-              Back to Sign In
+              {t("forgotPassword.backToLogin")}
             </Link>
           </div>
         ) : (
           <>
-            <h2 className="text-2xl font-extrabold text-slate-800">Forgot your password?</h2>
-            <p className="mt-2 text-sm text-slate-500">
-              Enter your account email and we&apos;ll send you a link to reset your password.
-            </p>
+            <h2 className="text-2xl font-extrabold text-slate-800">{t("forgotPassword.heading")}</h2>
+            <p className="mt-2 text-sm text-slate-500">{t("forgotPassword.subheading")}</p>
 
             <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
               <div>
-                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">Email</label>
+                <label className="text-[10px] font-black uppercase tracking-widest text-slate-400">{t("forgotPassword.emailLabel")}</label>
                 <input
                   type="email"
-                  placeholder="e.g. john.doe@healthcare.com"
+                  placeholder={t("auth.emailPlaceholder")}
                   value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
@@ -130,11 +136,11 @@ export default function ForgotPasswordPage() {
                 disabled={loading}
                 className="w-full rounded-xl bg-blue-600 py-4 text-sm font-bold tracking-[0.15em] text-white shadow-xl shadow-blue-100 transition-all hover:bg-blue-700 hover:shadow-blue-200 active:scale-[0.98] disabled:cursor-not-allowed disabled:opacity-60"
               >
-                {loading ? "Sending..." : "Send Reset Link"}
+                {loading ? t("forgotPassword.sending") : t("forgotPassword.sendResetLink")}
               </button>
 
               <Link href="/login" className="block text-center text-xs font-bold text-slate-400 hover:text-slate-600">
-                &larr; Back to Sign In
+                &larr; {t("forgotPassword.backToLogin")}
               </Link>
             </form>
           </>

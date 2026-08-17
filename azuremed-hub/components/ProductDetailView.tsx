@@ -44,7 +44,14 @@ export default function ProductDetailView({
       <div className="max-w-[1400px] mx-auto px-10 grid md:grid-cols-2 gap-12">
         <div className="relative h-[360px] md:h-[440px] w-full rounded-3xl bg-gradient-to-br from-blue-50 to-indigo-50">
           {product.image_url && (
-            <Image src={product.image_url} alt={product.name} fill className="object-contain p-8" priority />
+            <Image
+              src={product.image_url}
+              alt={product.name}
+              fill
+              sizes="(max-width: 768px) 100vw, 50vw"
+              className="object-contain p-8"
+              priority
+            />
           )}
         </div>
 

@@ -1,6 +1,7 @@
 "use client";
 
 import { usePathname } from "next/navigation";
+import { useLanguage } from "@/components/LanguageContext";
 
 /**
  * Floating "Need Help?" button, bottom-right on every storefront page except
@@ -17,6 +18,7 @@ import { usePathname } from "next/navigation";
  */
 export default function NeedHelpButton() {
   const pathname = usePathname();
+  const { t } = useLanguage();
   if (pathname?.startsWith("/checkout")) return null;
 
   const botUsername = process.env.NEXT_PUBLIC_TELEGRAM_BOT_USERNAME;
@@ -41,7 +43,7 @@ export default function NeedHelpButton() {
         <span className="absolute -top-1 -right-1 h-2 w-2 rounded-full bg-red-500" />
       </span>
       <span className="max-w-0 overflow-hidden whitespace-nowrap text-sm font-semibold opacity-0 transition-all duration-300 group-hover:max-w-xs group-hover:opacity-100 group-focus-visible:max-w-xs group-focus-visible:opacity-100">
-        Need Help?
+        {t("needHelp.label")}
       </span>
     </a>
   );

@@ -35,8 +35,22 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   return <LanguageContext.Provider value={{ lang, setLang, t }}>{children}</LanguageContext.Provider>;
 }
 
+// Some components (LogoutButton, etc.) are shared between the storefront
+// (wrapped in LanguageProvider) and the admin/staff/portal dashboards
+// (deliberately not — see translations.ts's own scope note: this dictionary
+// only covers storefront chrome). Throwing here would crash logout on every
+// dashboard the moment such a shared component called t(); falling back to
+// English-only instead means those surfaces keep working exactly as before,
+// while the storefront still gets full translation.
+function englishOnlyFallback(): LanguageContextValue {
+  return {
+    lang: "en",
+    setLang: () => {},
+    t: (key) => translations[key]?.en ?? key,
+  };
+}
+
 export function useLanguage() {
   const ctx = useContext(LanguageContext);
-  if (!ctx) throw new Error("useLanguage must be used within LanguageProvider");
-  return ctx;
+  return ctx ?? englishOnlyFallback();
 }

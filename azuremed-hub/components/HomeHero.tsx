@@ -77,6 +77,7 @@ export default function HomeHero({ totalProducts, categoryCount }: { totalProduc
             src="/images/hero-medical-supplies.png"
             alt="Medical Inventory and Equipment"
             fill
+            sizes="(max-width: 768px) 100vw, 50vw"
             className="relative object-contain drop-shadow-2xl brightness-105 hover:scale-105 transition-transform duration-300"
             priority
           />

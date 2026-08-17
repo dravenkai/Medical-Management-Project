@@ -51,7 +51,7 @@ export default function ProductCard({ product }: { product: Product }) {
             ? "bg-red-50 text-red-500 ring-red-100"
             : "bg-white/90 text-slate-300 ring-slate-100 hover:text-red-500"
         }`}
-        aria-label={favorite ? "Remove from wishlist" : "Add to wishlist"}
+        aria-label={favorite ? t("product.removeFromWishlist") : t("product.addToWishlist")}
       >
         <FaHeart />
       </button>
@@ -62,6 +62,7 @@ export default function ProductCard({ product }: { product: Product }) {
             src={product.image_url}
             alt={product.name}
             fill
+            sizes="(max-width: 768px) 100vw, 25vw"
             className="object-contain p-3 transition-transform duration-300 group-hover:scale-110"
           />
         )}
