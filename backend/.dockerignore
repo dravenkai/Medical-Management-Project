@@ -1,0 +1,5 @@
+.git
+.env
+vendor
+database/app.sqlite
+public/database/app.sqlite

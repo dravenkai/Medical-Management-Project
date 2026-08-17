@@ -1,0 +1,123 @@
+name: medical-project
+
+services:
+  mysql:
+    image: mysql:8.0
+    restart: unless-stopped
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      # Auto-creates this DB on first boot AND makes it the default database
+      # for any mounted init script that doesn't select its own — which is
+      # exactly what lets backend/database/schema.sql (no CREATE
+      # DATABASE/USE of its own) run unmodified against medical_project.
+      MYSQL_DATABASE: ${MYSQL_BACKEND_DB}
+    ports:
+      # Host access for a GUI client (TablePlus/DBeaver/MySQL Workbench).
+      # Remove this mapping if you don't need it.
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+      # Both schema files are mounted as-is (no copies to keep in sync):
+      # 01 runs against medical_project (the MYSQL_DATABASE default above).
+      # 02 is self-contained — it does its own CREATE DATABASE azuremed_hub
+      # + USE, so the default database above doesn't matter for it.
+      # NOTE: docker-entrypoint-initdb.d only runs on a genuinely empty
+      # /var/lib/mysql — it will NOT re-run against the mysql_data volume
+      # once it exists. Wipe the volume (see README below) to reseed.
+      - ./backend/database/schema.sql:/docker-entrypoint-initdb.d/01-medical-project-schema.sql:ro
+      - ./azuremed-hub/config/azuremed_schema.sql:/docker-entrypoint-initdb.d/02-azuremed-hub-schema.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-uroot", "-p${MYSQL_ROOT_PASSWORD}"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks: [medical-net]
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    environment:
+      APP_NAME: "Medical Backend"
+      APP_ENV: local
+      APP_KEY: ${APP_KEY}
+      TOKEN_TTL_MINUTES: "720"
+      FRONTEND_ORIGIN: ${FRONTEND_ORIGIN}
+      DB_DRIVER: mysql
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_NAME: ${MYSQL_BACKEND_DB}
+      DB_USER: root
+      DB_PASS: ${MYSQL_ROOT_PASSWORD}
+      DB_CHARSET: utf8mb4
+    ports:
+      - "8000:8000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks: [medical-net]
+
+  azuremed-hub:
+    build:
+      context: ./azuremed-hub
+      args:
+        NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+        NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: ${NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}
+    restart: unless-stopped
+    environment:
+      DB_HOST: mysql
+      DB_PORT: "3306"
+      DB_USER: root
+      DB_PASS: ${MYSQL_ROOT_PASSWORD}
+      DB_NAME: ${MYSQL_HUB_DB}
+      NEXTAUTH_SECRET: ${NEXTAUTH_SECRET}
+      NEXTAUTH_URL: ${NEXTAUTH_URL}
+      GOOGLE_AI_ENDPOINT: ${GOOGLE_AI_ENDPOINT}
+      GOOGLE_AI_API_KEY: ${GOOGLE_AI_API_KEY}
+      NEXT_PUBLIC_RECAPTCHA_SITE_KEY: ${NEXT_PUBLIC_RECAPTCHA_SITE_KEY}
+      RECAPTCHA_SECRET_KEY: ${RECAPTCHA_SECRET_KEY}
+      SMTP_HOST: ${SMTP_HOST}
+      SMTP_PORT: ${SMTP_PORT}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      SMTP_FROM: ${SMTP_FROM}
+      BOT_API_SECRET: ${BOT_API_SECRET}
+      BOT_TOKEN: ${BOT_TOKEN}
+      NEXT_PUBLIC_TELEGRAM_BOT_USERNAME: ${NEXT_PUBLIC_TELEGRAM_BOT_USERNAME}
+    ports:
+      - "3000:3000"
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks: [medical-net]
+
+  admin-dashboard:
+    build:
+      context: ./Admin-Dashboard
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL}
+        VITE_ADMIN_EMAIL: ${VITE_ADMIN_EMAIL}
+        VITE_ADMIN_PASSWORD: ${VITE_ADMIN_PASSWORD}
+    restart: unless-stopped
+    ports:
+      - "5173:80"
+    depends_on: [backend]
+    networks: [medical-net]
+
+  bot:
+    build: ./azuremed-hub/bot
+    restart: unless-stopped
+    environment:
+      BOT_TOKEN: ${BOT_TOKEN}
+      # Internal Docker DNS name, not localhost — this runs server-side
+      # inside the compose network, unlike the browser-side Admin-Dashboard.
+      API_BASE_URL: http://azuremed-hub:3000
+      BOT_API_SECRET: ${BOT_API_SECRET}
+    depends_on: [azuremed-hub]
+    networks: [medical-net]
+
+networks:
+  medical-net:
+    driver: bridge
+
+volumes:
+  mysql_data:

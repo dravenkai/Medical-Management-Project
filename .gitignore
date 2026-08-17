@@ -1,0 +1,8 @@
+# Root-level Docker Compose secrets
+.env
+
+# Common noise if anything ever runs from the repo root
+node_modules/
+dist/
+.next/
+__pycache__/
